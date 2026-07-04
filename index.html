@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="二维动销设计师作品集">
+  <title>作品集</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ===== Header / 个人信息 ===== -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="profile-left">
+      <div class="avatar" id="profileAvatar">?</div>
+      <div class="profile-info">
+        <h1 id="profileName">你的名字</h1>
+        <div class="title" id="profileTitle">二维动销设计师</div>
+        <div class="bio" id="profileBio">专注于品牌视觉、动态图形设计与创意内容制作</div>
+      </div>
+    </div>
+    <div class="contacts" id="profileContacts"></div>
+  </div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<main class="main-container">
+
+  <!-- 分类筛选 -->
+  <div class="filter-bar" id="filterBar"></div>
+
+  <!-- 作品网格 -->
+  <div class="works-grid" id="worksGrid"></div>
+
+</main>
+
+<!-- ===== Lightbox / 作品详情弹窗 ===== -->
+<div class="modal-overlay" id="lightboxOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="lightboxClose">✕</button>
+    <div class="modal-media" id="lightboxMedia"></div>
+    <div class="modal-info">
+      <div class="modal-title" id="lightboxTitle"></div>
+      <div class="modal-meta">
+        <span class="modal-badge" id="lightboxBadge"></span>
+      </div>
+      <div class="modal-desc" id="lightboxDesc"></div>
+      <div class="modal-tags" id="lightboxTags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Admin FAB 按钮 ===== -->
+<button class="admin-fab" id="adminFab" title="管理作品集">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<!-- ===== 密码门 ===== -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-box">
+    <h3>🔒 管理员验证</h3>
+    <input class="form-input" type="password" id="pwInput" placeholder="请输入管理密码">
+    <div class="pw-error" id="pwError"></div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-secondary" id="pwCancelBtn">取消</button>
+      <button class="btn btn-primary" id="pwConfirmBtn">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Admin 管理面板 ===== -->
+<div class="admin-modal" id="adminModal">
+  <div class="admin-panel">
+
+    <div class="admin-header">
+      <h2>⚙️ 作品集管理</h2>
+      <button class="admin-close" id="adminClose">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="add">添加作品</button>
+      <button class="admin-tab" data-tab="categories">分类管理</button>
+      <button class="admin-tab" data-tab="works">作品列表</button>
+      <button class="admin-tab" data-tab="profile">个人资料</button>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- ── 添加作品 ── -->
+      <div class="admin-section active" data-section="add">
+
+        <div class="form-group">
+          <label class="form-label">作品类型</label>
+          <select class="form-select" id="addType">
+            <option value="image">图片</option>
+            <option value="video">视频</option>
+            <option value="webp">WebP 动图</option>
+            <option value="link">网站链接</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">作品标题 *</label>
+          <input class="form-input" type="text" id="addTitle" placeholder="为这件作品起个名字">
+        </div>
+
+        <!-- 文件上传区（图片/视频/webp） -->
+        <div class="form-group" id="uploadArea">
+          <label class="form-label">上传文件</label>
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">☁️</div>
+            <div style="font-size:13px;color:#666;margin-top:4px;">点击或拖拽文件到此处</div>
+            <div class="upload-hint">支持 JPG · PNG · GIF · WebP · MP4 · MOV 等格式</div>
+            <div class="upload-preview" id="uploadPreviewText"></div>
+            <input type="file" id="fileInput" accept="image/*">
+          </div>
+        </div>
+
+        <!-- 链接输入区 -->
+        <div class="form-group" id="linkArea" style="display:none;">
+          <label class="form-label">网站链接 *</label>
+          <input class="form-input" type="url" id="addLink" placeholder="https://example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">所属分类</label>
+          <select class="form-select" id="addCategory"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">作品描述</label>
+          <textarea class="form-textarea" id="addDesc" placeholder="简单描述这件作品的背景、创作思路…"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="addSubmitBtn">添加作品</button>
+        </div>
+      </div>
+
+      <!-- ── 分类管理 ── -->
+      <div class="admin-section" data-section="categories">
+        <div class="category-list" id="categoryList"></div>
+
+        <div class="add-category-row">
+          <input class="form-input" type="text" id="newCatName" placeholder="输入新分类名称">
+          <button class="btn btn-primary" id="addCategoryBtn">添加</button>
+        </div>
+
+        <p style="font-size:12px;color:#999;margin-top:12px;">
+          提示：「全部」分类固定显示，不可删除。自定义分类删除后，作品不会丢失。
+        </p>
+      </div>
+
+      <!-- ── 作品列表 ── -->
+      <div class="admin-section" data-section="works">
+        <div class="works-admin-list" id="worksAdminList"></div>
+        <p style="font-size:12px;color:#999;margin-top:4px;">
+          提示：删除作品后数据无法恢复，请谨慎操作。
+        </p>
+      </div>
+
+      <!-- ── 个人资料 ── -->
+      <div class="admin-section" data-section="profile">
+
+        <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+          <div class="avatar" id="adminAvatarPreview" style="width:56px;height:56px;font-size:22px;flex-shrink:0;border:1px solid var(--border);cursor:pointer;" id="avatarUploadBtn">
+            👤
+          </div>
+          <div>
+            <button class="btn btn-secondary btn-sm" id="avatarUploadBtn">更换头像</button>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+            <div style="font-size:11px;color:#999;margin-top:4px;">推荐正方形图片</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">姓名 / 昵称</label>
+            <input class="form-input" type="text" id="editName" placeholder="你的名字">
+          </div>
+          <div class="form-group">
+            <label class="form-label">职位头衔</label>
+            <input class="form-input" type="text" id="editTitle" placeholder="二维动销设计师">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">个人简介</label>
+          <textarea class="form-textarea" id="editBio" placeholder="一句话介绍自己…" style="min-height:60px;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label class="form-label" style="margin:0;">联系方式</label>
+            <button class="btn btn-secondary btn-sm" id="addContactBtn">+ 添加</button>
+          </div>
+          <div id="contactsEditor"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="saveProfileBtn">保存资料</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast 提示 ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
