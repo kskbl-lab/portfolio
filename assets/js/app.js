@@ -10,14 +10,13 @@ const DEFAULT_PROFILE = {
   bio: '专注于品牌视觉、动态图形设计与创意内容制作',
   avatar: '',
   contacts: [
-    { icon: 'email', label: 'your@email.com', href: 'mailto:your@email.com' },
-    { icon: 'phone', label: '138 0000 0000', href: 'tel:13800000000' },
-    { icon: 'wechat', label: 'WeChat: yourwechat', href: '' },
+    { icon: 'email', label: 'your@email.com' },
+    { icon: 'phone', label: '138 0000 0000' },
+    { icon: 'wechat', label: 'WeChat: yourwechat' },
   ]
 };
 
 const DEFAULT_CATEGORIES = [
-  { id: 'all', name: '全部', fixed: true },
   { id: 'brand', name: '品牌动画' },
   { id: 'social', name: '社交媒体' },
   { id: 'ad', name: '广告创意' },
@@ -44,14 +43,15 @@ function saveData() {
 
 function loadData() {
   try {
-    state.profile = JSON.parse(localStorage.getItem('pf_profile')) || DEFAULT_PROFILE;
-    state.categories = JSON.parse(localStorage.getItem('pf_categories')) || DEFAULT_CATEGORIES;
+    state.profile = JSON.parse(localStorage.getItem('pf_profile')) || JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+    state.categories = JSON.parse(localStorage.getItem('pf_categories')) || JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
     state.works = JSON.parse(localStorage.getItem('pf_works')) || [];
   } catch {
-    state.profile = DEFAULT_PROFILE;
-    state.categories = DEFAULT_CATEGORIES;
+    state.profile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+    state.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
     state.works = [];
   }
+  // 兼容旧数据：清理掉旧版 contacts 里的 href 字段影响（不删，只是展示时不用）
 }
 
 // ─── 工具函数 ──────────────────────────────────────────
@@ -104,34 +104,33 @@ function renderProfile() {
   titleEl.textContent = p.title || '';
   bioEl.textContent = p.bio || '';
 
+  // 联系方式图标（仅用于视觉区分，全部用 span 纯文字，不可点击跳转）
   const iconMap = {
     email: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
     phone: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.61 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.52 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.15 6.15l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
     wechat: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
-    link: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
-    location: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    link:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+    location:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
   };
 
+  // 全部渲染为 span，不生成任何可点击的 <a> 标签
   contactsEl.innerHTML = (p.contacts || []).map(c => {
     const icon = iconMap[c.icon] || iconMap.link;
-    const inner = `${icon}<span>${c.label}</span>`;
-    return c.href
-      ? `<a class="contact-item" href="${c.href}" target="_blank" rel="noopener">${inner}</a>`
-      : `<span class="contact-item">${inner}</span>`;
+    return `<span class="contact-item">${icon}<span>${c.label || ''}</span></span>`;
   }).join('');
 }
 
 // ─── 渲染分类筛选 ──────────────────────────────────────
 function renderFilterBar() {
   const bar = document.getElementById('filterBar');
-  const cats = [{ id: 'all', name: '全部', fixed: true }, ...state.categories.filter(c => !c.fixed)];
+  // 全部 + 自定义分类
+  const allCats = [{ id: 'all', name: '全部' }, ...state.categories];
 
-  bar.innerHTML = cats.map(cat => {
+  bar.innerHTML = allCats.map(cat => {
     const count = cat.id === 'all'
       ? state.works.length
       : state.works.filter(w => w.categoryId === cat.id).length;
-    return `<button class="filter-tag${state.activeCategory === cat.id ? ' active' : ''}"
-      data-cat="${cat.id}">
+    return `<button class="filter-tag${state.activeCategory === cat.id ? ' active' : ''}" data-cat="${cat.id}">
       ${cat.name}<span class="filter-count">${count}</span>
     </button>`;
   }).join('');
@@ -148,7 +147,7 @@ function renderFilterBar() {
 // ─── 渲染作品网格 ──────────────────────────────────────
 function renderWorks() {
   const grid = document.getElementById('worksGrid');
-  let works = state.activeCategory === 'all'
+  const works = state.activeCategory === 'all'
     ? state.works
     : state.works.filter(w => w.categoryId === state.activeCategory);
 
@@ -240,13 +239,13 @@ function closeLightbox() {
   const overlay = document.getElementById('lightboxOverlay');
   overlay.classList.remove('active');
   document.body.style.overflow = '';
-  // 停止视频播放
   const video = overlay.querySelector('video');
   if (video) video.pause();
 }
 
 // ─── Admin 密码门 ──────────────────────────────────────
 let adminUnlocked = false;
+
 function openAdminGate() {
   if (adminUnlocked) { openAdminModal(); return; }
   document.getElementById('pwGate').classList.add('active');
@@ -269,9 +268,11 @@ function checkPassword() {
 }
 
 // ─── Admin Modal ───────────────────────────────────────
-let adminTab = 'add'; // 'add' | 'categories' | 'works' | 'profile'
+let adminTab = 'add';
 
 function openAdminModal() {
+  // 每次打开面板都刷新分类下拉，确保数据最新
+  refreshCategorySelect();
   renderAdminCategories();
   renderAdminWorks();
   fillProfileForm();
@@ -288,13 +289,14 @@ function closeAdminModal() {
 
 function switchAdminTab(tab) {
   adminTab = tab;
+  // 切换到"添加作品"时也刷新分类下拉
+  if (tab === 'add') refreshCategorySelect();
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.admin-section').forEach(s => s.classList.toggle('active', s.dataset.section === tab));
 }
 
 // ─── 添加作品 ──────────────────────────────────────────
 let pendingFile = null;
-let pendingFileName = '';
 
 function setupAddForm() {
   const typeSelect = document.getElementById('addType');
@@ -302,13 +304,11 @@ function setupAddForm() {
   const linkArea = document.getElementById('linkArea');
   const fileInput = document.getElementById('fileInput');
   const uploadZone = document.getElementById('uploadZone');
-  const catSelect = document.getElementById('addCategory');
 
   typeSelect.addEventListener('change', () => {
     const t = typeSelect.value;
     uploadArea.style.display = t !== 'link' ? 'block' : 'none';
     linkArea.style.display = t === 'link' ? 'block' : 'none';
-    // 更新文件接受类型
     if (t === 'video') fileInput.accept = 'video/*';
     else if (t === 'webp') fileInput.accept = 'image/webp,image/*';
     else fileInput.accept = 'image/*';
@@ -316,10 +316,8 @@ function setupAddForm() {
     document.getElementById('uploadPreviewText').textContent = '';
   });
 
-  // 点击上传区
   uploadZone.addEventListener('click', () => fileInput.click());
 
-  // 拖拽
   uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
   uploadZone.addEventListener('drop', e => {
@@ -336,29 +334,33 @@ function setupAddForm() {
 
 function handleFileSelected(file) {
   pendingFile = file;
-  pendingFileName = file.name;
-  document.getElementById('uploadPreviewText').textContent = `已选择：${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-  // 自动填充标题
+  document.getElementById('uploadPreviewText').textContent =
+    `已选择：${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
   const titleInput = document.getElementById('addTitle');
   if (!titleInput.value) {
     titleInput.value = file.name.replace(/\.[^.]+$/, '');
   }
 }
 
+// 刷新分类下拉，并确保当前选中值是有效的
 function refreshCategorySelect() {
   const sel = document.getElementById('addCategory');
-  sel.innerHTML = state.categories.filter(c => !c.fixed).map(c =>
-    `<option value="${c.id}">${c.name}</option>`
-  ).join('');
+  const cats = state.categories; // 不过滤 fixed，因为 categories 里已无 fixed 字段
+  sel.innerHTML = cats.length === 0
+    ? '<option value="">（请先添加分类）</option>'
+    : cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 async function submitAddWork() {
   const title = document.getElementById('addTitle').value.trim();
   const type = document.getElementById('addType').value;
   const desc = document.getElementById('addDesc').value.trim();
-  const catId = document.getElementById('addCategory').value;
+  // 直接在提交时读取 select 当前值，确保最新
+  const catSelect = document.getElementById('addCategory');
+  const catId = catSelect.value;
 
   if (!title) { showToast('请填写作品标题'); return; }
+  if (!catId) { showToast('请先在「分类管理」中添加分类'); return; }
 
   const work = { id: genId(), title, type, desc, categoryId: catId, createdAt: Date.now() };
 
@@ -394,30 +396,60 @@ async function submitAddWork() {
   showToast('作品添加成功！');
 }
 
+function cancelAddWork() {
+  resetAddForm();
+  closeAdminModal();
+}
+
 function resetAddForm() {
   document.getElementById('addTitle').value = '';
   document.getElementById('addDesc').value = '';
   document.getElementById('addLink').value = '';
+  document.getElementById('addType').value = 'image';
+  document.getElementById('uploadArea').style.display = 'block';
+  document.getElementById('linkArea').style.display = 'none';
   document.getElementById('uploadPreviewText').textContent = '';
   pendingFile = null;
-  pendingFileName = '';
   document.getElementById('fileInput').value = '';
+  document.getElementById('fileInput').accept = 'image/*';
 }
 
 // ─── 分类管理 ──────────────────────────────────────────
 function renderAdminCategories() {
   const list = document.getElementById('categoryList');
-  const cats = state.categories.filter(c => !c.fixed);
-  list.innerHTML = cats.length === 0
-    ? '<p style="color:#999;font-size:12px;text-align:center;padding:12px;">暂无自定义分类</p>'
-    : cats.map(c => {
-        const cnt = state.works.filter(w => w.categoryId === c.id).length;
-        return `<div class="category-item">
-          <span class="cat-name">${c.name}</span>
-          <span class="cat-count">${cnt} 件</span>
-          <button class="btn btn-sm btn-danger" onclick="deleteCategory('${c.id}')">删除</button>
-        </div>`;
-      }).join('');
+  const cats = state.categories;
+  if (cats.length === 0) {
+    list.innerHTML = '<p style="color:#999;font-size:12px;text-align:center;padding:12px;">暂无分类，请添加</p>';
+    return;
+  }
+  list.innerHTML = cats.map(c => {
+    const cnt = state.works.filter(w => w.categoryId === c.id).length;
+    return `<div class="category-item">
+      <input class="form-input cat-rename-input" value="${c.name}" data-id="${c.id}"
+        style="flex:1;font-size:13px;font-weight:500;padding:5px 8px;">
+      <span class="cat-count">${cnt} 件</span>
+      <button class="btn btn-sm btn-secondary" onclick="renameCategory('${c.id}')">重命名</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteCategory('${c.id}')">删除</button>
+    </div>`;
+  }).join('');
+}
+
+function renameCategory(id) {
+  const input = document.querySelector(`.cat-rename-input[data-id="${id}"]`);
+  if (!input) return;
+  const newName = input.value.trim();
+  if (!newName) { showToast('分类名称不能为空'); return; }
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+  if (state.categories.find(c => c.id !== id && c.name === newName)) {
+    showToast('分类名称已存在'); return;
+  }
+  cat.name = newName;
+  saveData();
+  renderFilterBar();
+  refreshCategorySelect();
+  renderAdminWorks();
+  showToast(`已重命名为"${newName}"`);
 }
 
 function addCategory() {
@@ -463,7 +495,7 @@ function renderAdminWorks() {
     } else {
       thumb = '🔗';
     }
-    const catName = getCatName(w.categoryId);
+    const catName = getCatName(w.categoryId) || '未分类';
     return `<div class="works-admin-item">
       <div class="work-thumb">${thumb}</div>
       <div class="work-name">${w.title}</div>
@@ -497,22 +529,21 @@ function fillProfileForm() {
 function renderContactsEditor() {
   const container = document.getElementById('contactsEditor');
   container.innerHTML = (state.profile.contacts || []).map((c, i) => `
-    <div class="form-row" style="align-items:center;gap:8px;margin-bottom:8px;" data-idx="${i}">
-      <select class="form-select" style="max-width:100px;" onchange="updateContact(${i},'icon',this.value)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <select class="form-select" style="width:80px;flex-shrink:0;" onchange="updateContact(${i},'icon',this.value)">
         ${['email','phone','wechat','link','location'].map(v =>
-          `<option value="${v}"${c.icon === v ? ' selected' : ''}>${{email:'邮箱',phone:'电话',wechat:'微信',link:'链接',location:'地址'}[v]}</option>`
+          `<option value="${v}"${c.icon === v ? ' selected' : ''}>${{email:'邮箱',phone:'电话',wechat:'微信',link:'其他',location:'地址'}[v]}</option>`
         ).join('')}
       </select>
-      <input class="form-input" style="flex:1;" placeholder="显示文字" value="${c.label || ''}"
+      <input class="form-input" style="flex:1;" placeholder="显示文字（如：138-0000-0000）" value="${c.label || ''}"
         oninput="updateContact(${i},'label',this.value)">
-      <input class="form-input" style="flex:1;" placeholder="链接（可选）" value="${c.href || ''}"
-        oninput="updateContact(${i},'href',this.value)">
       <button class="btn btn-sm btn-danger" onclick="removeContact(${i})">✕</button>
     </div>
   `).join('');
 }
 
 function updateContact(idx, field, val) {
+  if (!state.profile.contacts[idx]) return;
   state.profile.contacts[idx][field] = val;
 }
 function removeContact(idx) {
@@ -520,7 +551,7 @@ function removeContact(idx) {
   renderContactsEditor();
 }
 function addContact() {
-  state.profile.contacts.push({ icon: 'link', label: '', href: '' });
+  state.profile.contacts.push({ icon: 'link', label: '' });
   renderContactsEditor();
 }
 
@@ -528,6 +559,8 @@ function saveProfile() {
   state.profile.name = document.getElementById('editName').value.trim();
   state.profile.title = document.getElementById('editTitle').value.trim();
   state.profile.bio = document.getElementById('editBio').value.trim();
+  // 同步更新网页标题
+  document.title = state.profile.name ? `${state.profile.name} - 作品集` : '作品集';
   saveData();
   renderProfile();
   showToast('个人资料已保存');
@@ -556,17 +589,24 @@ function init() {
   setupAvatarUpload();
   refreshCategorySelect();
 
+  // 更新网页标题
+  if (state.profile.name) {
+    document.title = `${state.profile.name} - 作品集`;
+  }
+
   // Lightbox 关闭
   document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
   document.getElementById('lightboxOverlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeLightbox();
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeAdminModal(); } });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeLightbox(); closeAdminModal(); }
+  });
 
   // Admin FAB
   document.getElementById('adminFab').addEventListener('click', openAdminGate);
 
-  // Admin Modal
+  // Admin Modal 关闭
   document.getElementById('adminClose').addEventListener('click', closeAdminModal);
   document.getElementById('adminModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeAdminModal();
@@ -586,6 +626,7 @@ function init() {
 
   // Add work form
   document.getElementById('addSubmitBtn').addEventListener('click', submitAddWork);
+  document.getElementById('addCancelBtn').addEventListener('click', cancelAddWork);
 
   // Categories
   document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
